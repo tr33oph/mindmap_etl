@@ -4,7 +4,7 @@ ETL use .xmmap mindmap file to build schema and extraction logic.
 
 # Rules
 
-![rules](/rules.png)
+![rules](rules.png)
 
 # Example
 
@@ -14,7 +14,7 @@ Edit with mindmanager. you can download from here:
     提取码：pfes 
     复制这段内容后打开百度网盘手机App，操作更方便哦
 
-![Example](/example.png)
+![Example](example.png)
 
 Example
 
@@ -23,4 +23,4 @@ Example
 3. pip install -r req.txt
 4. `python3 loader.py` to see results:
 
-![output](/output.png)
+![output](output.png)
