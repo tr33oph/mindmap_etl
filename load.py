@@ -1,6 +1,6 @@
 # coding: utf-8
-from schema_parse import to_attr_dict, read, extract_shape_rels
 import json
+from schema_parse import to_attr_dict, read, extract_shape_rels
 from extractor import extract_nodes, extract_edges
 
 def pre_extractor(row):
