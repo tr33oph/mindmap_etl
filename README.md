@@ -22,6 +22,11 @@
 3. `pip3 install .`
 4. `python3 loader.py` 查看输出
 
+或者：
+
+1. `pip3 install mindmap_etl`
+2. `python3 loader.py` 查看输出
+
 ![output](output.png)
 
 你可以参考`loader.py`编写自己的代码。
