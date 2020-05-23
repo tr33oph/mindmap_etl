@@ -91,7 +91,7 @@ def extract_shape_rels(path):
                 all_shapes[oid] = edge_schemas[name]
                 # TODO: all_shapes.update({v['id']:v for v in edge_schemas[name]['fields'].values()})
             
-            elif m == []:
+            elif m == [] or m == ['urn:mindjet:Capsule']:
                 # 解析边的extractor，类型为马蹄形
 
                 edge_extractors[name] = dict(
@@ -121,6 +121,8 @@ def extract_shape_rels(path):
 
                 all_shapes[oid] = edge_extractors[name]
                 # TODO: all_shapes.update({v['id']:v for i,v in edge_extractors[name]['fields'].values()})
+            else:
+                print('unkown edge:', m)
 
 
     for t in dict2list(d.Map.OneTopic.Topic.FloatingTopics.Topic):
@@ -128,15 +130,17 @@ def extract_shape_rels(path):
     
         name = t['@Text'].PlainText
         oid = t['#Topic'].OId
+        if '@Topic' in t.SubTopics:
+            t.SubTopics.Topic['#Topic'] = t.SubTopics['@Topic']
 
         # 解析节点schema，类型为长方形节点
         if m == ['urn:mindjet:Rectangle']:
             node_schemas[name] = dict(
                 fields={i['@Text'].PlainText:{
-                    'dtype':i.SubTopics.Topic['@Text'].PlainText if 'SubTopics' in i else default_dtype,
-                    'type': 'field',
-                    'name': i['@Text'].PlainText,
-                    'id': i['#Topic'].OId,
+                        'dtype':i.SubTopics.Topic['@Text'].PlainText if 'SubTopics' in i else default_dtype,
+                        'type': 'field',
+                        'name': i['@Text'].PlainText,
+                        'id': i['#Topic'].OId,
                     } for i in dict2list(t.SubTopics.Topic)},
                 pk='',
                 type='node_schema',
@@ -170,15 +174,15 @@ def extract_shape_rels(path):
             all_shapes.update({v['id']:v for v in origin[name]['fields'].values()})
 
         # 解析节点提取器，类型为马蹄形
-        elif m == [] or m == ['urn:mindjet:Round']:
-            
+        elif m == [] or m == ['urn:mindjet:Capsule']:
+
             node_extractors[name] = dict(
                 fields = {i['@Text'].PlainText:{
                     'type': 'field',
                     'name': i['@Text'].PlainText,
                     'id': i['#Topic'].OId,
                     'from': None
-                    } for i in dict2list(t.SubTopics.Topic) if dp.values(i, '**/IconType') == []},
+                    } for i in dict2list(t.SubTopics.Topic) if dp.values(i, '**/IconType') != ['urn:mindjet:QuestionMark']},
                 type='node_extractor',
                 name=name,
                 id=oid,
@@ -194,6 +198,8 @@ def extract_shape_rels(path):
 
             all_shapes[oid] = node_extractors[name]
             all_shapes.update({v['id']:v for v in node_extractors[name]['fields'].values()})
+        else:
+            print('unknown:', m)
     
     # 构建链接
 
@@ -224,6 +230,32 @@ def extract_shape_rels(path):
                 if (edge_extractors[i]['from_id'], edge_extractors[i]['to_id']) == (s, t):
                     edge_extractors[i]['from'] = all_shapes[s]
                     edge_extractors[i]['to'] = all_shapes[t]
+        
+    oname = list(origin.keys())[0]
+    for n, v in node_extractors.items():
+        # 处理节点提取器的默认字段，默认从origin获取同名的
+        for f in v['fields']:
+            if v['fields'][f]['from'] is None:
+                if (f in origin[oname]['fields']):
+                    v['fields'][f]['from'] = origin[oname]['fields'][f]
+                else:
+                    print('Field %s of %s has no input field.'%(f, n))
+
+        # 处理节点提取器的默认schema，默认从node_schemas获取同名的
+        if v['schema'] is None:
+            if n in node_schemas:
+                v['schema'] = node_schemas[n]
+            else:
+                print('Node extractor %s has no schema.'%(n))
+    
+    for e, v in edge_extractors.items():
+        # 处理边提取器的默认schema，默认从edge_schemas获取同名的
+        if v['schema'] is None:
+            if e in edge_schemas:
+                v['schema'] = edge_schemas[e]
+            else:
+                print('Node extractor %s has no schema.'%(n))
+        print(e, v['schema']['name'])
 
     return (
         to_attr_dict(origin),
