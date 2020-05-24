@@ -2,6 +2,7 @@
 
 from encoder import XML2Dict
 import dpath.util as dp
+import re
 
 def read(p):
     xml = XML2Dict()
@@ -25,6 +26,8 @@ class AttrDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
+def debug(*x,**y):
+    print(*x,**y)
 
 def to_attr_dict(d):
     if isinstance(d, dict):
@@ -70,8 +73,8 @@ def extract_shape_rels(path):
             name = rel.FloatingTopics.Topic['@Text'].PlainText
             oid = rel.FloatingTopics['@Topic'].OId
 
-            if m == ['urn:mindjet:Diamond']:
-                # 解析边的schema，类型为菱形
+            if m == ['urn:mindjet:RectangleBalloon']:
+                # 解析边的schema，类型为正方形
                 edge_schemas[name] = dict(
                     # TODO: edge fields
                     # fields = {i['@Text'].PlainText:{
@@ -118,16 +121,33 @@ def extract_shape_rels(path):
                         if dp.values(i, '**/IconType') == ['urn:mindjet:QuestionMark']:
                             print('debug: condition:', i['@Text'].PlainText, name)
                             edge_extractors[name]['condition'] = eval(i['@Text'].PlainText)
+                    
+                    
+                # 提取超链接形式标识的edge schema：
+                url =  dp.values(rel.FloatingTopics.Topic, "@Hyperlink/Url")
+                if url:
+                    debug(name ,url)
+                    m = re.search("\[@OId='([^']+)'\]", url[0])
+                    if m:
+                        rels.append([oid, m.group(1)])
 
                 all_shapes[oid] = edge_extractors[name]
                 # TODO: all_shapes.update({v['id']:v for i,v in edge_extractors[name]['fields'].values()})
             else:
                 print('unkown edge:', m)
 
+    def get_subtopics_list(subtopics):
+        if '@Topic' in subtopics:
+            subtopics.Topic['#Topic'] = subtopics['@Topic']
+        return dict2list(subtopics.Topic)
+
 
     for t in dict2list(d.Map.OneTopic.Topic.FloatingTopics.Topic):
         m =  dp.values(t, '**/VerticalLabelFloatingTopicShape')
-    
+        
+        if not '@Text' in t: # 跳过空白的浮动主题
+            continue
+
         name = t['@Text'].PlainText
         oid = t['#Topic'].OId
         if '@Topic' in t.SubTopics:
@@ -175,14 +195,14 @@ def extract_shape_rels(path):
 
         # 解析节点提取器，类型为马蹄形
         elif m == [] or m == ['urn:mindjet:Capsule']:
-
+            
             node_extractors[name] = dict(
                 fields = {i['@Text'].PlainText:{
                     'type': 'field',
                     'name': i['@Text'].PlainText,
                     'id': i['#Topic'].OId,
                     'from': None
-                    } for i in dict2list(t.SubTopics.Topic) if dp.values(i, '**/IconType') != ['urn:mindjet:QuestionMark']},
+                    } for i in get_subtopics_list(t.SubTopics) if dp.values(i, '**/IconType') != ['urn:mindjet:QuestionMark']},
                 type='node_extractor',
                 name=name,
                 id=oid,
@@ -195,11 +215,19 @@ def extract_shape_rels(path):
                 if dp.values(i, '**/IconType') == ['urn:mindjet:QuestionMark']:
                     print('debug: condition:', i['@Text'].PlainText, name)
                     node_extractors[name]['condition'] = eval(i['@Text'].PlainText)
+            
+            # 提取超链接形式标识的node schema：
+            url =  dp.values(t, "@Hyperlink/Url")
+            if url:
+                debug(name, url)
+                m = re.search("\[@OId='([^']+)'\]", url[0])
+                if m:
+                    rels.append([oid, m.group(1)])
 
             all_shapes[oid] = node_extractors[name]
             all_shapes.update({v['id']:v for v in node_extractors[name]['fields'].values()})
         else:
-            print('unknown:', m)
+            debug('unknown:', m)
     
     # 构建链接
 
@@ -239,14 +267,14 @@ def extract_shape_rels(path):
                 if (f in origin[oname]['fields']):
                     v['fields'][f]['from'] = origin[oname]['fields'][f]
                 else:
-                    print('Field %s of %s has no input field.'%(f, n))
+                    debug('Field %s of %s has no input field.'%(f, n))
 
         # 处理节点提取器的默认schema，默认从node_schemas获取同名的
         if v['schema'] is None:
             if n in node_schemas:
                 v['schema'] = node_schemas[n]
             else:
-                print('Node extractor %s has no schema.'%(n))
+                debug('Node extractor %s has no schema.'%(n))
     
     for e, v in edge_extractors.items():
         # 处理边提取器的默认schema，默认从edge_schemas获取同名的
@@ -254,8 +282,7 @@ def extract_shape_rels(path):
             if e in edge_schemas:
                 v['schema'] = edge_schemas[e]
             else:
-                print('Node extractor %s has no schema.'%(n))
-        print(e, v['schema']['name'])
+                debug('Edge extractor %s has no schema.'%(e))
 
     return (
         to_attr_dict(origin),
