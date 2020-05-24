@@ -16,6 +16,7 @@ setup(
     platforms="any",
     install_requires=["xml2dict",
                         "dpath",
+                        "lxml",
                         "pandas"],
 
     scripts=[],
