@@ -3,14 +3,14 @@
 from encoder import XML2Dict
 import dpath.util as dp
 import re
+from lxml import etree
 
 def read(p):
     xml = XML2Dict()
     with open(p, 'r', encoding='utf-8') as f:
         s = f.read()
-        from lxml import etree
         root = etree.fromstring(s.encode())
-
+        
         # Remove namespace prefixes
         for elem in root.getiterator():
             elem.tag = etree.QName(elem).localname
