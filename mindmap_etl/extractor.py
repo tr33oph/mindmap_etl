@@ -18,11 +18,11 @@ def extract_nodes(idx, row, node_extractors,
     def extract(row, mapping, schema):
         nodes = {}
         for to,attr in mapping.items():
-            if (attr['from'] is None or row.get(attr['from'], None) is None):
+            if (attr['from'] is None or row.get(attr['from'].name, None) is None):
                 if schema['fields'][to].nullable: # 跳过可为空的字段
                     continue
                 else:
-                    print('Error row: Field no found from %s to %s at line %s'%(attr['from'], to, idx))
+                    print('Error row: Field no found from %s to %s at line %s'%(attr['from'].name, to, idx))
                     continue
             nodes[to] = format_type_func(row[attr['from'].name], schema['fields'][to]['dtype'])
         return nodes
