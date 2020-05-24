@@ -161,6 +161,7 @@ def extract_shape_rels(path):
                         'type': 'field',
                         'name': i['@Text'].PlainText,
                         'id': i['#Topic'].OId,
+                        'nullable': (dp.values(i, '**/IconType') == ["urn:mindjet:PadlockUnlocked"])
                     } for i in dict2list(t.SubTopics.Topic)},
                 pk='',
                 type='node_schema',
