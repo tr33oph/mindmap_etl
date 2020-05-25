@@ -73,7 +73,7 @@ def extract_shape_rels(path):
             name = rel.FloatingTopics.Topic['@Text'].PlainText
             oid = rel.FloatingTopics['@Topic'].OId
 
-            if m == ['urn:mindjet:RectangleBalloon']:
+            if m == ['urn:mindjet:RectangleBalloon'] or m == ['urn:mindjet:Rectangle']:
                 # 解析边的schema，类型为正方形
                 edge_schemas[name] = dict(
                     # TODO: edge fields
@@ -233,6 +233,15 @@ def extract_shape_rels(path):
     # 构建链接
 
     for s,t in rels:
+        c1, c2 = s in all_shapes, t in all_shapes
+        if not c1 and c2:
+            raise ValueError('%s has no starting element, check your map again.'%(all_shapes[t]['name']))
+        if not c2 and c1:
+            raise ValueError('%s has no ending element, check your map again.'%(all_shapes[s]['name']))
+        elif not c1 and not c2:
+            print('warn: unused rel: %s, %s'%(s, t))
+            continue
+        
         type_ = (all_shapes[s]['type'], all_shapes[t]['type'])
         if type_ == ('field', 'field'):
             # 字段对应关系
