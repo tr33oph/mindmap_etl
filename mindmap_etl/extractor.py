@@ -2,11 +2,11 @@ from collections import defaultdict
 
 def format_type(s, dtype):
     if dtype == 'TEXT':
-        return str(s)
+        return str(s or '')
     if dtype == 'INT':
-        return int(s)
+        return int(s or 0)
     if dtype == 'FLOAT':
-        return float(s)
+        return float(s or 0)
     return s
 
 def extract_nodes(idx, row, node_extractors, 
