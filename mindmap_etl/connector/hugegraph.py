@@ -56,7 +56,7 @@ def batch_writer(hg, node_edge_iter, batch_size=30, err_log_file='error_lines.lo
     batch_size_1 = batch_size-1
     node_batch, edge_batch = [], []
     st = time.time()
-    for idx, nodes, edges in node_edge_iter:
+    for idx,(nodes, edges) in enumerate(node_edge_iter):
         node_batch.extend(nodes)
         edge_batch.extend(edges)
         if idx % proc_step == 0:
