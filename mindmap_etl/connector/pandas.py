@@ -15,4 +15,4 @@ def extract_from_df(df, node_extractors, edge_extractors,
         edges = extract_edges(idx, row, nodes, edge_extractors, format_id_func=format_id_func)
         for i in edges:
             edges[i]['properties'] = {}
-        yield (list(nodes.values()), list(edges.values()))
+        yield (idx, list(nodes.values()), list(edges.values()))
