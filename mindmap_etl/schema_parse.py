@@ -73,8 +73,8 @@ def extract_shape_rels(path):
             name = rel.FloatingTopics.Topic['@Text'].PlainText
             oid = rel.FloatingTopics['@Topic'].OId
 
+            # 解析边的schema，类型为正方形
             if m == ['urn:mindjet:RectangleBalloon'] or m == ['urn:mindjet:Rectangle']:
-                # 解析边的schema，类型为正方形
                 edge_schemas[name] = dict(
                     # TODO: edge fields
                     # fields = {i['@Text'].PlainText:{
@@ -94,8 +94,8 @@ def extract_shape_rels(path):
                 all_shapes[oid] = edge_schemas[name]
                 # TODO: all_shapes.update({v['id']:v for v in edge_schemas[name]['fields'].values()})
             
+            # 解析边的extractor，类型为马蹄形
             elif m == [] or m == ['urn:mindjet:Capsule']:
-                # 解析边的extractor，类型为马蹄形
 
                 edge_extractors[name] = dict(
                     # TODO： edge fields
